@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能文档知识库</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+  <!-- 左侧导航 -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">AI</div>
+      <div class="logo-text">
+        <b>文档知识库</b>
+        <span>本地私有 · RAG 问答</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="nav-item active" data-view="home">首页</a>
+      <a class="nav-item" data-view="library">文档库</a>
+      <a class="nav-item" data-view="chat">AI 问答</a>
+      <a class="nav-item" data-view="settings">设置</a>
+    </nav>
+    <button class="nav-notify" id="navNotify">
+      新文档提醒
+      <span class="notify-badge hidden" id="notifyBadge">0</span>
+    </button>
+    <div class="sidebar-status">
+      <span class="dot" id="embedDot"></span><span id="embedStatus">Embedding 检测中…</span>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main">
+
+    <!-- ======== 首页 ======== -->
+    <section class="view active" id="view-home">
+      <header class="page-head">
+        <div>
+          <h1>首页</h1>
+          <p class="sub">收藏文档 · 最近新增 · 一键扫描入库</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn primary" id="homePickBtn">选择文档</button>
+          <button class="btn" id="homeScanBtn">扫描目录</button>
+        </div>
+      </header>
+
+      <!-- V2.2 文档格式分布 -->
+      <div class="card" id="formatCard">
+        <h3>文档格式分布</h3>
+        <div id="formatStats" class="format-stats"></div>
+      </div>
+
+      <h2 class="section-title">收藏文档 <span class="hint">在文档库中点击 ☆ 收藏常用文档</span></h2>
+      <div class="doc-grid" id="favList"></div>
+
+      <h2 class="section-title">最近新增</h2>
+      <div class="doc-list" id="recentList"></div>
+    </section>
+
+    <!-- ======== 文档库 ======== -->
+    <section class="view" id="view-library">
+      <header class="page-head">
+        <div>
+          <h1>文档库</h1>
+          <p class="sub">AI 自动分类 · 标签筛选 · 批量管理</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn primary" id="libPickBtn">选择文档</button>
+          <button class="btn" id="libScanBtn">扫描目录</button>
+        </div>
+      </header>
+
+      <div class="lib-main">
+          <div class="lib-toolbar">
+            <input type="text" id="libSearch" placeholder="搜索文件名 / 摘要关键词…">
+            <button class="btn small" id="libFilterBtn">筛选 <span id="filterCount" class="filter-count hidden"></span></button>
+            <button class="btn small" id="libRefresh">刷新</button>
+            <button class="btn small danger hidden" id="libDelSel">删除选中</button>
+          </div>
+
+          <!-- 筛选面板：分类 / 时间 / 类型 合并（V2.4） -->
+          <div class="filter-panel hidden" id="filterPanel">
+            <div class="fp-row">
+              <span class="fp-label">分类</span>
+              <div class="fp-chips" id="fpCategory"></div>
+            </div>
+            <div class="fp-row">
+              <span class="fp-label">时间</span>
+              <div class="fp-chips" id="fpTime"></div>
+            </div>
+            <div class="fp-row">
+              <span class="fp-label">类型</span>
+              <div class="fp-chips" id="fpExt"></div>
+            </div>
+            <div class="fp-row">
+              <span class="fp-label">标签</span>
+              <div class="fp-chips" id="fpTag"></div>
+            </div>
+            <div class="fp-actions">
+              <button class="btn small" id="fpReset">重置</button>
+              <button class="btn small primary" id="fpApply">应用</button>
+            </div>
+          </div>
+
+          <table class="doc-table" id="docTable">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="checkAll"></th>
+                <th>收藏</th><th>文件名</th><th>分类</th><th>标签</th><th>来源</th><th>大小</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="docTbody"></tbody>
+          </table>
+          <div class="pager" id="libPager"></div>
+        </div>
+    </section>
+
+    <!-- ======== AI 问答 ======== -->
+    <section class="view" id="view-chat">
+      <header class="page-head">
+        <div>
+          <h1>AI 问答</h1>
+          <p class="sub">本地知识库 RAG 溯源问答 · 答案附带参考来源</p>
+        </div>
+        <div class="badge" id="chatModelBadge">模型未配置</div>
+      </header>
+      <div class="chat-layout">
+        <div class="chat-main">
+          <div class="chat-box" id="chatBox">
+            <div class="chat-welcome">
+              <h3>向你的本地知识库提问</h3>
+              <p>例如：帮我总结最近的项目方案 / 合同里的付款条款是什么？<br>
+              所有检索与推理仅在你本机完成，回答附参考来源。</p>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <textarea id="chatInput" rows="2" placeholder="输入问题，Enter 发送，Shift+Enter 换行…"></textarea>
+            <button class="btn primary" id="chatSend">发送</button>
+          </div>
+        </div>
+        <aside class="chat-side">
+          <div class="side-title">相关文档推荐</div>
+          <div id="chatRelated" class="chat-related">
+            <p class="muted">提问后这里会推荐关联文档</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ======== 设置 ======== -->
+    <section class="view" id="view-settings">
+      <header class="page-head">
+        <div>
+          <h1>设置</h1>
+          <p class="sub">更改背景 · 关于软件</p>
+        </div>
+      </header>
+
+      <div class="settings-wrap">
+        <!-- AI 问答服务（API 配置） -->
+        <div class="card">
+          <h3>AI 问答服务</h3>
+          <p class="form-hint" id="modeHint" style="margin-bottom:12px;">填写兼容 OpenAI 的 API 地址、密钥与模型名称后保存，AI 问答即使用该服务。密钥仅保存在本机，不会上传。</p>
+          <div id="apiFields">
+            <div class="form-row">
+              <label>API 地址</label>
+              <input type="text" id="setApiBase" placeholder="https://…/v1" autocomplete="off">
+            </div>
+            <div class="form-row">
+              <label>API 密钥</label>
+              <input type="password" id="setApiKey" placeholder="sk-…" autocomplete="off">
+            </div>
+            <div class="form-row">
+              <label>模型名称</label>
+              <input type="text" id="setApiModel" placeholder="模型 ID" autocomplete="off">
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; align-items:center; gap:12px; margin-bottom:0;">
+            <button class="btn small primary" id="saveLlmSettings">保存</button>
+            <span class="muted" id="llmSaveState"></span>
+          </div>
+        </div>
+
+        <!-- 监控目录（V2.0 新文档提醒） -->
+        <div class="card">
+          <h3>监控目录（新文档提醒）</h3>
+          <div class="form-row">
+            <label>目录路径</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="monDirInput" placeholder="输入要监控的文件夹路径" autocomplete="off" style="flex:1;">
+              <button class="btn small" id="monAddDownloads">使用下载目录</button>
+              <button class="btn small primary" id="monAddBtn">添加</button>
+            </div>
+            <p class="form-hint">每次进入软件时自动扫描一次监控目录，发现新文件会在左侧「新文档提醒」显示红色徽标；也可点「立即扫描一次」手动触发。确认后才入库，绝不静默导入。</p>
+          </div>
+          <div id="monDirList" class="scan-result"></div>
+          <div class="form-row" style="display:flex;align-items:center;gap:12px;margin-bottom:0;margin-top:12px;">
+            <button class="btn small" id="monScanNow">立即扫描一次</button>
+            <span class="muted" id="monScanState"></span>
+          </div>
+        </div>
+
+        <!-- 更改背景（V2.5） -->
+        <div class="card">
+          <h3>更改背景</h3>
+          <div class="form-row">
+            <label>主题</label>
+            <div class="theme-chips">
+              <button class="fp-chip theme-chip" data-theme="light">浅色</button>
+              <button class="fp-chip theme-chip" data-theme="dark">深色</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>背景图片</label>
+            <div class="bg-actions">
+              <button class="btn small" id="bgPickBtn">上传图片</button>
+              <button class="btn small" id="bgRemoveBtn">移除背景图</button>
+              <input type="file" id="bgInput" accept=".jpg,.jpeg,.png,.webp" hidden>
+            </div>
+            <p class="form-hint" id="bgHint">上传本机图片作为软件背景（仅本地保存，不上传云端）。</p>
+          </div>
+        </div>
+
+        <!-- 关于软件（V2.5） -->
+        <div class="card">
+          <h3>关于软件</h3>
+          <div class="about-grid">
+            <div><span>软件名称</span><b>AI 智能文档知识库</b></div>
+            <div><span>当前版本</span><b>V2.7（自定义 API · 简约界面）</b></div>
+            <div><span>产品定位</span><b>Windows 本地私有 AI 文档知识库</b></div>
+            <div><span>核心能力</span><b>自动入库 · AI 分类 · 语义检索 · RAG 溯源问答 · 收藏文档</b></div>
+            <div><span>技术栈</span><b>Python FastAPI · Chroma 向量库 · bge-small-zh · OpenAI 兼容 API</b></div>
+            <div><span>隐私承诺</span><b>原始文件、向量库、行为数据 100% 本地存储，绝不上传</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 扫描/导入弹窗 -->
+<div class="modal-mask hidden" id="scanModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="scanModalTitle">扫描新文档</h3>
+      <button class="modal-close" id="scanModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row inline">
+        <input type="text" id="scanDirInput" placeholder="输入要扫描的文件夹路径">
+        <button class="btn small" id="scanDirBtn">扫描</button>
+        <button class="btn small ghost" id="scanAddDownloads">使用下载目录</button>
+      </div>
+      <p class="form-hint">隐私规则：仅列出候选文件，由你勾选确认后才入库。</p>
+      <div id="scanResult" class="scan-result"></div>
+    </div>
+    <div class="modal-foot">
+      <span id="scanCount" class="muted"></span>
+      <button class="btn primary" id="scanConfirm" disabled>确认入库所选</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入进度弹窗 -->
+<div class="modal-mask hidden" id="taskModal">
+  <div class="modal small">
+    <div class="modal-head"><h3>入库进度</h3><span id="taskClose" class="modal-close">×</span></div>
+    <div class="modal-body">
+      <div class="progress"><div class="progress-bar" id="taskBar"></div></div>
+      <p class="muted center" id="taskText">准备中…</p>
+      <div id="taskResult" class="task-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 文档详情/编辑弹窗 -->
+<div class="modal-mask hidden" id="docModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="docModalTitle">文档</h3><button class="modal-close" id="docModalClose">×</button></div>
+    <div class="modal-body" id="docModalBody"></div>
+  </div>
+</div>
+
+<!-- 新文档确认入库弹窗（V2.0 后台扫描） -->
+<div class="modal-mask hidden" id="notifyModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>检测到新文档（后台静默扫描）</h3>
+      <button class="modal-close" id="notifyModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="form-hint">监控目录中发现以下新文件。隐私规则：仅在你确认后才入库，绝不静默导入。</p>
+      <div id="notifyList" class="scan-result"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="notifyDismissAll">全部忽略</button>
+      <div>
+        <span id="notifyCount" class="muted"></span>
+        <button class="btn primary" id="notifyIngestAll">全部确认入库</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- 文件选择器（V2.1：打开本地文件资源管理器选择文档） -->
+<input type="file" id="fileInput" multiple hidden
+       accept=".pdf,.docx,.doc,.xlsx,.pptx,.txt,.md">
+
+<!-- 分类模块：工具 → 任务 → 通知 → 各功能页 → 入口 -->
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/tasks.js"></script>
+<script src="/static/js/notifications.js"></script>
+<script src="/static/js/home.js"></script>
+<script src="/static/js/library.js"></script>
+<script src="/static/js/doc-modal.js"></script>
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/scan.js"></script>
+<script src="/static/js/chat.js"></script>
+<script src="/static/js/settings.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

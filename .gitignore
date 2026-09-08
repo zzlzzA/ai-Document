@@ -1,0 +1,24 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ===== 运行时数据（隐私：数据库 / 上传原件 / 向量库 / 模型 / 日志）=====
+# data/ 内含 knowledge.db（文档元数据）、uploads/（上传原件）、
+# chroma/（向量库）、models/（模型）、logs/（日志）—— 一律不进 Git
+data/
+
+# ===== PyInstaller 打包产物 =====
+build/
+dist/
+
+# ===== 环境配置（含密钥，禁止提交）=====
+.env
+*.env
+
+# ===== 系统 / 编辑器文件 =====
+Thumbs.db
+.DS_Store
+*.log
