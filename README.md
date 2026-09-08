@@ -7,7 +7,7 @@
 ![platform](https://img.shields.io/badge/platform-Windows-blue)
 ![prs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
-AIWenJian 是一个运行在本地的 AI 文档知识库客户端：把散落在电脑里的 PDF / Word / Excel / PPT / 文本等文档统一收进知识库，自动完成**解析、切片、向量化、AI 分类**，然后通过**混合检索 + RAG 溯源问答**直接向文档提问，答案附带参考来源。所有数据处理都在本机完成，原始文件绝不上传。
+AIWenJian 是一个运行在本地的 AI 文档知识库客户端：把散落在电脑里的 PDF / Word / Excel / PPT / 文本等文档统一收进知识库，自动完成**解析、切片、向量化、AI 分类**，然后通过**混合检索 + RAG 溯源问答**直接向文档提问，答案附带参考来源。(个人学习项目）
 
 ---
 
